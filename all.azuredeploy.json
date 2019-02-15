@@ -1,0 +1,57 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "servicePrincipalId":{
+            "type": "string",
+            "metadata": {
+                "description": "AKS Service Principal Id"
+            }
+        }
+    },
+    "variables": {
+        "prefix":"[uniqueString(resourcegroup().id)]",
+        "vnetName":"VNet1",
+        "servicePrincipalId":"123123212133213"
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-05-10",
+            "name": "VNetDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+              "mode": "Incremental",
+              "templateLink": {
+                 "uri":"VNet/vnet.azuredeploy.json",
+                 "contentVersion":"1.0.0.0"
+              },
+              "parameters": {
+                 "vnetName":{"value": "[variables('vnetName')]"}
+               }
+            }
+         },
+        {
+           "apiVersion": "2017-05-10",
+           "name": "AKSFEDeployment",
+           "type": "Microsoft.Resources/deployments",
+           "properties": {
+             "mode": "Incremental",
+             "templateLink": {
+                "uri":"AKS/aks.azuredeploy.json",
+                "contentVersion":"1.0.0.0"
+             },
+             "parameters": {
+                "resourceName":{"value": "[concat(variables('prefix'), 'fe-aks')]"},
+                "dnsPrefix":{"value": "[concat(variables('prefix'), 'fe-dns')]"},
+                "existingServicePrincipalObjectId":{"value:":"[variables('servicePrincipalId')]"},
+                "existingVirtualNetworkName":{"value:":"[variables('vnetName')]"},
+                "existingVirtualNetworkResourceGroup":{"value:":"[resourceGroup().name]"},
+                "existingSubnetName":{"value:":"SubnetAppGateway"}
+              }
+           },
+           "dependsOn": [
+            "VNetDeployment"
+          ]
+        }
+      ]
+}
